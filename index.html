@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>重要极限公式计算器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    
+    <!-- Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5',
+                        secondary: '#10B981',
+                        accent: '#F59E0B',
+                        dark: '#1E293B',
+                        light: '#F8FAFC'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .transition-all-300 {
+                transition: all 300ms ease-in-out;
+            }
+            .shadow-soft {
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-dark">
+    <!-- 顶部导航 -->
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-primary flex items-center">
+                <i class="fa fa-calculator mr-3 text-accent"></i>
+                重要极限公式计算器
+            </h1>
+            <div class="hidden md:flex items-center space-x-4">
+                <span class="text-gray-600">
+                    <i class="fa fa-info-circle mr-1"></i> 极限公式计算器
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要内容 -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- 历史记录区域 -->
+        <div class="bg-white rounded-xl shadow-soft p-6 mb-8">
+            <h2 class="text-xl font-bold mb-4 text-dark flex items-center">
+                <i class="fa fa-history mr-2 text-accent"></i> 历史记录
+                <button id="btnClearHistory" class="ml-auto text-sm text-gray-500 hover:text-red-500 transition-all-300">
+                    <i class="fa fa-trash mr-1"></i> 清除记录
+                </button>
+            </h2>
+            <div id="historyList" class="max-h-40 overflow-y-auto">
+                <div class="text-gray-500 text-center py-4">暂无历史记录</div>
+            </div>
+        </div>
+        <!-- 公式展示区 -->
+        <div class="bg-white rounded-xl shadow-soft p-6 mb-8 text-center">
+            <div class="mb-6">
+                <div class="text-lg font-semibold mb-2">选择极限类型:</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                    <div class="border border-gray-200 rounded-lg p-3 cursor-pointer bg-primary/10 border-primary" data-limit-type="second">
+                        <div class="font-medium">第二重要极限</div>
+                        <div class="text-sm text-gray-600">limₙ→∞ (1 + 1/n)ⁿ = e</div>
+                    </div>
+                    <div class="border border-gray-200 rounded-lg p-3 cursor-pointer hover:bg-gray-50" data-limit-type="first">
+                        <div class="font-medium">第一重要极限</div>
+                        <div class="text-sm text-gray-600">limₓ→0 sin(x)/x = 1</div>
+                    </div>
+                </div>
+                <div class="text-[clamp(1.2rem,2vw,1.8rem)] font-semibold">
+                    当前公式: <span class="text-primary" id="currentFormula">limₙ→∞ (1 + 1/n)ⁿ = e</span>
+                </div>
+            </div>
+            <p class="text-gray-600 max-w-3xl mx-auto" id="formulaDescription">
+                当n趋向于无穷大时，(1 + 1/n)ⁿ的极限值为自然常数e（约等于2.718281828459045）。
+                选择不同的n值，观察公式结果的变化。
+            </p >
+        </div>
+
+        <!-- 控制区和结果区 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <!-- 控制区 -->
+            <div class="bg-white rounded-xl shadow-soft p-6 lg:col-span-1">
+                <h2 class="text-xl font-bold mb-4 text-dark flex items-center">
+                    <i class="fa fa-sliders mr-2 text-accent"></i> 参数设置
+                </h2>
+                
+                <div class="mb-6">
+                    <label for="variableValue" class="block text-gray-700 mb-2 font-medium" id="variableLabel">n 值:</label>
+                    <div class="flex items-center space-x-2">
+                        <input 
+                            type="range" 
+                            id="variableValue" 
+                            min="1" 
+                            max="10000000" 
+                            step="1" 
+                            value="100"
+                            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
+                        >
+                    </div>
+                    <div class="flex items-center mt-2">
+                        <input 
+                            type="number" 
+                            id="variableInput" 
+                            min="1" 
+                            max="10000000" 
+                            value="100"
+                            class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        >
+                        <span class="ml-2 text-gray-500" id="variableMax">/ 10,000,000</span>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-gray-700 mb-2 font-medium">计算精度:</label>
+                    <div class="flex items-center space-x-2">
+                        <input 
+                            type="range" 
+                            id="precisionValue" 
+                            min="5" 
+                            max="20" 
+                            step="1" 
+                            value="15"
+                            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
+                        >
+                    </div>
+                    <div class="flex items-center mt-2">
+                        <span class="text-sm text-gray-600">小数点后 </span>
+                        <span class="mx-2 font-medium" id="precisionDisplay">15</span>
+                        <span class="text-sm text-gray-600">位</span>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-gray-700 mb-2 font-medium">计算结果:</label>
+                    <div class="bg-gray-50 p-4 rounded-md border border-gray-200">
+                        <div class="text-2xl font-bold text-primary" id="result">2.7048138294215285</div>
+                        <div class="text-sm text-gray-500 mt-1">与 e 的误差: <span id="error" class="text-accent">0.0134679990375165</span></div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3 mb-6">
+                    <button id="btnMin" class="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-md transition-all-300">
+                        <i class="fa fa-fast-backward mr-1"></i> 最小值
+                    </button>
+                    <button id="btnMax" class="bg-primary hover:bg-primary/90 text-white py-2 px-4 rounded-md transition-all-300">
+                        <i class="fa fa-fast-forward mr-1"></i> 最大值
+                    </button>
+                    <button id="btnReset" class="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-md transition-all-300">
+                        <i class="fa fa-refresh mr-1"></i> 重置
+                    </button>
+                    <button id="btnSave" class="bg-secondary hover:bg-secondary/90 text-white py-2 px-4 rounded-md transition-all-300">
+                        <i class="fa fa-save mr-1"></i> 保存结果
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 结果图像区 -->
+            <div class="bg-white rounded-xl shadow-soft p-6 lg:col-span-2">
+                <h2 class="text-xl font-bold mb-4 text-dark flex items-center">
+                    <i class="fa fa-line-chart mr-2 text-accent"></i> 函数图像
+                    <span class="ml-auto">
+                        <button id="btnZoomIn" class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 py-1 px-3 rounded-md transition-all-300">
+                            <i class="fa fa-search-plus"></i>
+                        </button>
+                        <button id="btnZoomOut" class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 py-1 px-3 rounded-md transition-all-300 ml-1">
+                            <i class="fa fa-search-minus"></i>
+                        </button>
+                    </span>
+                </h2>
+                <div class="relative h-[400px]">
+                    <canvas id="functionChart"></canvas>
+                </div>
+                <div class="mt-4 text-sm text-gray-500 text-center" id="chartDescription">
+                    图像显示了(1 + 1/n)ⁿ随n增大的变化趋势，逐渐趋近于自然常数e
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-6 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p>重要极限公式计算器 &copy; 2025</p >
+            <p class="text-gray-400 text-sm mt-2">用于数学教学的互动工具</p >
+        </div>
+    </footer>
+
+    <script>
+        // 自然常数 e 的近似值
+        const E = Math.E;
+        
+        // 当前极限类型
+        let currentLimitType = 'second'; // 'second' 或 'first'
+        
+        // 获取DOM元素
+        const variableSlider = document.getElementById('variableValue');
+        const variableInput = document.getElementById('variableInput');
+        const variableLabel = document.getElementById('variableLabel');
+        const variableMax = document.getElementById('variableMax');
+        const resultElement = document.getElementById('result');
+        const errorElement = document.getElementById('error');
+        const btnMin = document.getElementById('btnMin');
+        const btnMax = document.getElementById('btnMax');
+        const btnReset = document.getElementById('btnReset');
+        const btnSave = document.getElementById('btnSave');
+        const btnZoomIn = document.getElementById('btnZoomIn');
+        const btnZoomOut = document.getElementById('btnZoomOut');
+        const btnClearHistory = document.getElementById('btnClearHistory');
+        const precisionSlider = document.getElementById('precisionValue');
+        const precisionDisplay = document.getElementById('precisionDisplay');
+        const currentFormula = document.getElementById('currentFormula');
+        const formulaDescription = document.getElementById('formulaDescription');
+        const chartDescription = document.getElementById('chartDescription');
+        const historyList = document.getElementById('historyList');
+        const limitTypeOptions = document.querySelectorAll('[data-limit-type]');
+        
+        // 历史记录
+        let historyRecords = JSON.parse(localStorage.getItem('limitCalculatorHistory')) || [];
+        
+        // 图表缩放级别
+        let zoomLevel = 1;
+        
+        // 计算精度
+        let precision = parseInt(precisionSlider.value);
+        
+        // 初始化图表
+        let ctx = document.getElementById('functionChart').getContext('2d');
+        let chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: '(1 + 1/n)ⁿ',
+                        data: [],
+                        borderColor: '#4F46E5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.1,
+                        pointRadius: 0,
+                        pointHoverRadius: 5
+                    },
+                    {
+                        label: 'e (自然常数)',
+                        data: [],
+                        borderColor: '#F59E0B',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        fill: false,
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                scales: {
+                    x: {
+                        type: 'logarithmic',
+                        title: {
+                            display: true,
+                            text: 'n 值 (对数刻度)',
+                            font: {
+                                weight: 'bold'
+                            }
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                // 格式化大数字显示
+                                if (value >= 1000000) {
+                                    return value / 1000000 + 'M';
+                                } else if (value >= 1000) {
+                                    return value / 1000 + 'K';
+                                }
+                                return value;
+                            }
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: '(1 + 1/n)ⁿ 的值',
+                            font: {
+                                weight: 'bold'
+                            }
+                        },
+                        min: 2,
+                        max: 3
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            title: function(tooltipItems) {
+                                const value = tooltipItems[0].raw.x;
+                                if (value >= 1000000) {
+                                    return `n = ${value / 1000000}M`;
+                                } else if (value >= 1000) {
+                                    return `n = ${value / 1000}K`;
+                                }
+                                return `n = ${value}`;
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'top',
+                    }
+                }
+            }
+        });
+        
+        // 计算函数值
+        function calculateValue(variable) {
+            if (currentLimitType === 'second') {
+                return Math.pow(1 + 1/variable, variable);
+            } else {
+                // 第一重要极限: sin(x)/x, x趋近于0
+                return Math.sin(variable) / variable;
+            }
+        }
+        
+        // 更新结果显示
+        function updateResult(variable) {
+            const value = calculateValue(variable);
+            let expectedValue, error;
+            
+            if (currentLimitType === 'second') {
+                expectedValue = E;
+                error = Math.abs(value - expectedValue);
+            } else {
+                expectedValue = 1;
+                error = Math.abs(value - expectedValue);
+            }
+            
+            resultElement.textContent = value.toPrecision(precision);
+            errorElement.textContent = error.toPrecision(precision);
+            
+            return value;
+        }
+        
+        // 更新图表数据
+        function updateChart(variable) {
+            let points = [];
+            let maxPoint, minPoint;
+            
+            if (currentLimitType === 'second') {
+                // 第二重要极限: n从1到10^7
+                maxPoint = Math.max(variable, 100000) * zoomLevel;
+                minPoint = 1;
+                
+                // 生成从1到maxPoint的对数分布点
+                for (let i = 0; i <= 100; i++) {
+                    const logValue = i * (Math.log10(maxPoint) / 100);
+                    const value = Math.pow(10, logValue);
+                    points.push(Math.round(value));
+                }
+            } else {
+                // 第一重要极限: x从-π到π
+                maxPoint = Math.PI * zoomLevel;
+                minPoint = -maxPoint;
+                
+                // 生成线性分布点
+                for (let i = 0; i <= 100; i++) {
+                    const value = minPoint + i * (maxPoint - minPoint) / 100;
+                    points.push(value);
+                }
+                
+                // 避免x=0的情况（除以零）
+                points = points.filter(p => p !== 0);
+            }
+            
+            // 确保当前变量值在数据点中
+            if (!points.includes(variable)) {
+                points.push(variable);
+                points.sort((a, b) => a - b);
+            }
+            
+            // 计算每个点的函数值
+            const values = points.map(p => calculateValue(p));
+            
+            // 更新图表
+            chart.data.labels = points;
+            
+            if (currentLimitType === 'second') {
+                chart.data.datasets[0].label = '(1 + 1/n)ⁿ';
+                chart.data.datasets[1].label = 'e (自然常数)';
+                chart.data.datasets[1].data = points.map(p => ({x: p, y: E}));
+                chart.options.scales.x.min = 1;
+                chart.options.scales.x.max = maxPoint;
+                chart.options.scales.y.min = 2;
+                chart.options.scales.y.max = 3;
+            } else {
+                chart.data.datasets[0].label = 'sin(x)/x';
+                chart.data.datasets[1].label = '极限值 = 1';
+                chart.data.datasets[1].data = points.map(p => ({x: p, y: 1}));
+                chart.options.scales.x.min = minPoint;
+                chart.options.scales.x.max = maxPoint;
+                chart.options.scales.y.min = 0;
+                chart.options.scales.y.max = 1.2;
+            }
+            
+            chart.data.datasets[0].data = points.map((p, i) => ({x: p, y: values[i]}));
+            chart.update();
+        }
+        
+        // 初始化页面
+        function init() {
+            // 加载历史记录
+            loadHistory();
+            
+            // 设置初始值
+            const initialVariable = parseInt(variableInput.value);
+            updateResult(initialVariable);
+            updateChart(initialVariable);
+            
+            // 设置极限类型选项事件
+            setupLimitTypeOptions();
+        }
+        
+        // 设置极限类型选项事件
+        function setupLimitTypeOptions() {
+            limitTypeOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    const type = this.dataset.limitType;
+                    changeLimitType(type);
+                });
+            });
+        }
+        
+        // 切换极限类型
+        function changeLimitType(type) {
+            currentLimitType = type;
+            
+            // 更新UI
+            limitTypeOptions.forEach(option => {
+                if (option.dataset.limitType === type) {
+                    option.classList.add('bg-primary/10', 'border-primary');
+                    option.classList.remove('hover:bg-gray-50');
+                } else {
+                    option.classList.remove('bg-primary/10', 'border-primary');
+                    option.classList.add('hover:bg-gray-50');
+                }
+            });
+            
+            // 更新公式和描述
+            if (type === 'second') {
+                currentFormula.textContent = 'limₙ→∞ (1 + 1/n)ⁿ = e';
+                formulaDescription.textContent = '当n趋向于无穷大时，(1 + 1/n)ⁿ的极限值为自然常数e（约等于2.718281828459045）。选择不同的n值，观察公式结果的变化。';
+                chartDescription.textContent = '图像显示了(1 + 1/n)ⁿ随n增大的变化趋势，逐渐趋近于自然常数e';
+                
+                // 更新变量标签和范围
+                variableLabel.textContent = 'n 值:';
+                variableSlider.min = 1;
+                variableSlider.max = 10000000;
+                variableInput.min = 1;
+                variableInput.max = 10000000;
+                variableMax.textContent = '/ 10,000,000';
+                
+                // 设置默认值
+                variableSlider.value = 100;
+                variableInput.value = 100;
+            } else {
+                currentFormula.textContent = 'limₓ→0 sin(x)/x = 1';
+                formulaDescription.textContent = '当x趋向于0时，sin(x)/x的极限值为1。选择不同的x值，观察公式结果的变化。';
+                chartDescription.textContent = '图像显示了sin(x)/x随x趋近于0的变化趋势，逐渐趋近于极限值1';
+                
+                // 更新变量标签和范围
+                variableLabel.textContent = 'x 值:';
+                variableSlider.min = -Math.PI;
+                variableSlider.max = Math.PI;
+                variableSlider.step = 0.001;
+                variableInput.min = -Math.PI;
+                variableInput.max = Math.PI;
+                variableInput.step = 0.001;
+                variableMax.textContent = '';
+                
+                // 设置默认值
+                variableSlider.value = 0.1;
+                variableInput.value = 0.1;
+            }
+            
+            // 重置缩放
+            zoomLevel = 1;
+            
+            // 更新结果和图表
+            const variable = parseFloat(variableInput.value);
+            updateResult(variable);
+            updateChart(variable);
+        }
+        
+        // 保存当前结果到历史记录
+        function saveToHistory() {
+            const variable = parseFloat(variableInput.value);
+            const result = calculateValue(variable);
+            const timestamp = new Date().toLocaleString();
+            
+            let formula, expectedValue;
+            if (currentLimitType === 'second') {
+                formula = `(1 + 1/${variable.toPrecision(5)})^${variable.toPrecision(5)}`;
+                expectedValue = E;
+            } else {
+                formula = `sin(${variable.toPrecision(5)})/${variable.toPrecision(5)}`;
+                expectedValue = 1;
+            }
+            
+            const record = {
+                id: Date.now(),
+                timestamp,
+                formula,
+                result: result.toPrecision(precision),
+                expectedValue: expectedValue.toPrecision(precision),
+                error: Math.abs(result - expectedValue).toPrecision(precision),
+                limitType: currentLimitType
+            };
+            
+            // 添加到历史记录
+            historyRecords.unshift(record);
+            
+            // 限制历史记录数量
+            if (historyRecords.length > 10) {
+                historyRecords.pop();
+            }
+            
+            // 保存到本地存储
+            localStorage.setItem('limitCalculatorHistory', JSON.stringify(historyRecords));
+            
+            // 更新历史记录显示
+            loadHistory();
+            
+            // 显示保存成功提示
+            const saveBtn = document.getElementById('btnSave');
+            const originalText = saveBtn.innerHTML;
+            saveBtn.innerHTML = '<i class="fa fa-check mr-1"></i> 已保存';
+            saveBtn.disabled = true;
+            
+            setTimeout(() => {
+                saveBtn.innerHTML = originalText;
+                saveBtn.disabled = false;
+            }, 1500);
+        }
+        
+        // 加载历史记录
+        function loadHistory() {
+            if (historyRecords.length === 0) {
+                historyList.innerHTML = '<div class="text-gray-500 text-center py-4">暂无历史记录</div>';
+                return;
+            }
+            
+            historyList.innerHTML = '';
+            
+            historyRecords.forEach(record => {
+                const recordElement = document.createElement('div');
+                recordElement.className = 'border-b border-gray-100 py-2 last:border-0';
+                
+                let formulaDisplay;
+                if (record.limitType === 'second') {
+                    formulaDisplay = `(1 + 1/n)ⁿ`;
+                } else {
+                    formulaDisplay = `sin(x)/x`;
+                }
+                
+                recordElement.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <div class="font-medium">${formulaDisplay}</div>
+                        <div class="text-xs text-gray-500">${record.timestamp}</div>
+                    </div>
+                    <div class="flex justify-between mt-1">
+                        <div class="text-sm">计算结果: <span class="text-primary font-medium">${record.result}</span></div>
+                        <div class="text-sm">误差: <span class="text-accent">${record.error}</span></div>
+                    </div>
+                `;
+                
+                historyList.appendChild(recordElement);
+            });
+        }
+        
+        // 清除历史记录
+        function clearHistory() {
+            if (historyRecords.length === 0) return;
+            
+            if (confirm('确定要清除所有历史记录吗？')) {
+                historyRecords = [];
+                localStorage.removeItem('limitCalculatorHistory');
+                loadHistory();
+            }
+        }
+        
+        // 事件监听
+        variableSlider.addEventListener('input', function() {
+            const variable = parseFloat(this.value);
+            variableInput.value = variable;
+            updateResult(variable);
+            updateChart(variable);
+        });
+        
+        variableInput.addEventListener('change', function() {
+            let variable = parseFloat(this.value);
+            
+            // 确保变量在有效范围内
+            if (currentLimitType === 'second') {
+                variable = Math.min(Math.max(variable, 1), 10000000);
+            } else {
+                variable = Math.min(Math.max(variable, -Math.PI), Math.PI);
+                // 避免x=0的情况（除以零）
+                if (variable === 0) variable = 0.001;
+            }
+            
+            this.value = variable;
+            variableSlider.value = variable;
+            updateResult(variable);
+            updateChart(variable);
+        });
+        
+        btnMin.addEventListener('click', function() {
+            let minValue;
+            
+            if (currentLimitType === 'second') {
+                minValue = 1;
+            } else {
+                minValue = -Math.PI * zoomLevel;
+            }
+            
+            variableInput.value = minValue;
+            variableSlider.value = minValue;
+            updateResult(minValue);
+            updateChart(minValue);
+        });
+        
+        btnMax.addEventListener('click', function() {
+            let maxValue;
+            
+            if (currentLimitType === 'second') {
+                maxValue = 10000000;
+            } else {
+                maxValue = Math.PI * zoomLevel;
+            }
+            
+            variableInput.value = maxValue;
+            variableSlider.value = maxValue;
+            updateResult(maxValue);
+            updateChart(maxValue);
+        });
+        
+        btnReset.addEventListener('click', function() {
+            let defaultValue;
+            
+            if (currentLimitType === 'second') {
+                defaultValue = 100;
+            } else {
+                defaultValue = 0.1;
+            }
+            
+            variableInput.value = defaultValue;
+            variableSlider.value = defaultValue;
+            updateResult(defaultValue);
+            updateChart(defaultValue);
+        });
+        
+        btnSave.addEventListener('click', saveToHistory);
+        
+        btnZoomIn.addEventListener('click', function() {
+            if (currentLimitType === 'second') {
+                zoomLevel = Math.min(zoomLevel * 2, 10);
+            } else {
+                zoomLevel = Math.max(zoomLevel / 2, 0.1);
+            }
+            
+            const variable = parseFloat(variableInput.value);
+            updateChart(variable);
+        });
+        
+        btnZoomOut.addEventListener('click', function() {
+            if (currentLimitType === 'second') {
+                zoomLevel = Math.max(zoomLevel / 2, 1);
+            } else {
+                zoomLevel = Math.min(zoomLevel * 2, 10);
+            }
+            
+            const variable = parseFloat(variableInput.value);
+            updateChart(variable);
+        });
+        
+        btnClearHistory.addEventListener('click', clearHistory);
+        
+        precisionSlider.addEventListener('input', function() {
+            precision = parseInt(this.value);
+            precisionDisplay.textContent = precision;
+            
+            const variable = parseFloat(variableInput.value);
+            updateResult(variable);
+        });
+        
+        // 页面加载完成后初始化
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
